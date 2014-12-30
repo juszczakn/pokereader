@@ -49,7 +49,6 @@
    :B0 "q" :B1 "r" :B2 "s" :B3 "t" :B4 "u" :B5 "v" :B6 "w" :B7 "x"
    :B8 "y" :B9 "z"
 
-
    :E1 "pk" :E2 "mn" :E3 "-" :E4 :E5 :E6 "?" :E7 "!" :E8 "." :EF "♂"
 
    :F1 "x" :F3 "/" :F4 "," :F5 "♀" :F6 "0" :F7 "1" :F8 "2" :F9 "3"
@@ -67,10 +66,14 @@
   ([filename]
      (.read (clojure.java.io/input-stream filename) sav-data-file)))
 
+(defn- to-hex
+  [x]
+  (format "%02X" x))
+
 (defn- get-name
   [bytes offset]
   (let [name (for [x (range offset (+ offset 8))]
-               (keyword (format "%02X" (nth bytes x))))]
+               (keyword (to-hex (nth bytes x))))]
     (first (clojure.string/split (apply str (map #(hex-to-ascii-map %) name)) #"\n"))))
 
 (defn get-trainer-name
@@ -83,18 +86,88 @@
   ([bytes]
      (get-name bytes 0x25F6)))
 
+
+;; Offset 	Contents 	Size
+;; 0x00 	Index number of the Species 	1 byte
+;; 0x01 	Current HP 	2 bytes
+;; 0x03 	Level 	1 byte
+;; 0x04 	Status condition 	1 byte
+;; 0x05 	Type 1 	1 byte
+;; 0x06 	Type 2 	1 byte
+;; 0x07 	Catch rate/Held item 	1 byte
+;; 0x08 	Index number of move 1 	1 byte
+;; 0x09 	Index number of move 2 	1 byte
+;; 0x0A 	Index number of move 3 	1 byte
+;; 0x0B 	Index number of move 4 	1 byte
+;; 0x0C 	Original Trainer ID number 	2 bytes
+;; 0x0E 	Experience points 	3 bytes
+;; 0x11 	HP EV data 	2 bytes
+;; 0x13 	Attack EV data 	2 bytes
+;; 0x15 	Defense EV data 	2 bytes
+;; 0x17 	Speed EV data 	2 bytes
+;; 0x19 	Special EV data 	2 bytes
+;; 0x1B 	IV data 	2 bytes
+;; 0x1D 	Move 1's PP values 	1 byte
+;; 0x1E 	Move 2's PP values 	1 byte
+;; 0x1F 	Move 3's PP values 	1 byte
+;; 0x20 	Move 4's PP values 	1 byte
+;; 0x21 	Level 	1 byte
+;; 0x22 	Maximum HP 	2 bytes
+;; 0x24 	Attack 	2 bytes
+;; 0x26 	Defense 	2 bytes
+;; 0x28 	Speed 	2 bytes
+;; 0x2A 	Special 	2 bytes 
+
+(defn- get-individual-poke-data
+  [bytes offset]
+  (let [;; offsets
+        hex-number 0 ;1
+        level 3 ;1
+        type-1 5 ;1
+        type-2 6 ;1
+        move-1 8 ;1
+        move-2 9 ;1
+        move-3 10 ;1
+        move-4 11 ;1
+        ot 12 ;2
+        exp 14 ;3
+        hp-ev 17 ;2
+        atk-ev 19 ;2
+        def-ev 21 ;2
+        spd-ev 23 ;2
+        spc-ev 25 ;2
+        iv 27 ;2
+        move-1-pp 29 ;1
+        move-2-pp 30 ;1
+        move-3-pp 31 ;1
+        move-4-pp 32 ;1
+        level 33 ;1
+        max-hp 34 ;2
+        atk 36 ;2
+        def 38 ;2
+        spd 40 ;2
+        spc 42 ;2
+        ]
+    {
+     :pokemon (hex-poke-index (keyword (to-hex (nth bytes (+ offset hex-number)))))
+     :level (nth bytes (+ offset level))
+     ;:type-1 (nth bytes (+ offset type-1))
+     ;:type-2 (nth bytes (+ offset type-2))
+     :move-1 (move-set (nth bytes (+ offset move-1)))
+     :move-2 (move-set (nth bytes (+ offset move-2)))
+     :move-3 (move-set (nth bytes (+ offset move-3)))
+     :move-4 (move-set (nth bytes (+ offset move-4)))
+     ;; ev's and iv
+     :move-1-pp (nth bytes (+ offset move-1-pp))
+     :move-2-pp (nth bytes (+ offset move-2-pp))
+     :move-3-pp (nth bytes (+ offset move-3-pp))
+     :move-4-pp (nth bytes (+ offset move-4-pp))
+     }))
+
 (defn get-pokemon-team
   ([] (get-pokemon-team sav-data-file))
   ([bytes]
      (let [offset 0x2F2C
-           count (nth bytes offset)
-           ]
-       )))
-
-
-;; (defn get-pokedex-owned
-;;   ([] (get-pokedex-owned sav-data-file))
-;;   ([bytes]
-;;      (let [offset 0x25A3
-;;            count ]
-;;        )))
+           count (nth bytes offset)]
+       (for [x (range (inc offset) (+ offset count 1))]
+         (hex-poke-index (keyword (to-hex (nth bytes x))))))))
