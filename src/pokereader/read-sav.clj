@@ -81,7 +81,7 @@
   ([bytes]
      (get-name bytes 0x2598)))
 
-(defn get-rivals-name
+(defn get-rival-name
   ([] (get-rivals-name sav-data-file))
   ([bytes]
      (get-name bytes 0x25F6)))
@@ -153,15 +153,15 @@
      :level (nth bytes (+ offset level))
      ;:type-1 (nth bytes (+ offset type-1))
      ;:type-2 (nth bytes (+ offset type-2))
-     :move-1 (move-set (nth bytes (+ offset move-1)))
-     :move-2 (move-set (nth bytes (+ offset move-2)))
-     :move-3 (move-set (nth bytes (+ offset move-3)))
-     :move-4 (move-set (nth bytes (+ offset move-4)))
+     :move-1 (get-from-move-set (nth bytes (+ offset move-1)))
+     :move-2 (get-from-move-set (nth bytes (+ offset move-2)))
+     :move-3 (get-from-move-set (nth bytes (+ offset move-3)))
+     :move-4 (get-from-move-set (nth bytes (+ offset move-4)))
      ;; ev's and iv
-     :move-1-pp (nth bytes (+ offset move-1-pp))
-     :move-2-pp (nth bytes (+ offset move-2-pp))
-     :move-3-pp (nth bytes (+ offset move-3-pp))
-     :move-4-pp (nth bytes (+ offset move-4-pp))
+     ;; :move-1-pp (nth bytes (+ offset move-1-pp))
+     ;; :move-2-pp (nth bytes (+ offset move-2-pp))
+     ;; :move-3-pp (nth bytes (+ offset move-3-pp))
+     ;; :move-4-pp (nth bytes (+ offset move-4-pp))
      }))
 
 (defn get-pokemon-team
@@ -170,4 +170,10 @@
      (let [offset 0x2F2C
            count (nth bytes offset)]
        (for [x (range (inc offset) (+ offset count 1))]
-         (hex-poke-index (keyword (to-hex (nth bytes x))))))))
+         (hex-poke-index (keyword (to-hex (nth bytes x))))))
+     (let [offset 0x2F2C
+           teamsize (nth bytes offset)
+           species-list (range (inc offset) (+ offset 7))
+           pokemon-list (range (+ offset 8) (+ offset 8 (* 44 teamsize)) 44)]
+       (for [pokemon pokemon-list]
+         (get-individual-poke-data bytes pokemon)))))

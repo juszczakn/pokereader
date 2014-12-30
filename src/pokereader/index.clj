@@ -511,3 +511,8 @@
    163 "Slash"
    164 "Substitute"
    165 "Struggle"})
+
+(defn get-from-move-set
+  [move]
+  (let [move (if (neg? move) (+ 256 move) move)]
+    (move-set move)))
