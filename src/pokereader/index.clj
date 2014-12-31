@@ -192,6 +192,10 @@
    :BD "Weepinbell"
    :BE "Victreebel"})
 
+(defn get-from-hex-poke-index
+  [hex]
+  (hex-poke-index hex))
+
 (def poke-index
   {"Bulbasaur" 1
    "Ivysaur" 2  
@@ -344,6 +348,10 @@
    "Dragonite" 149
    "Mewtwo" 150   
    "Mew" 151})
+
+(defn get-id-from-poke-index
+  [name]
+  (poke-index name))
 
 (def move-set
   {1 "Pound"

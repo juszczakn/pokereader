@@ -1,4 +1,4 @@
-(ns pokereader.read-sav
+(ns pokereader.read-save
   (:use pokereader.index))
 
 ;; (for [x (concat (range 8 10) (map char (range 65 71)))
@@ -56,15 +56,17 @@
 
    :50 "\n"})
 
-(def test-file "/home/nick/workspace/clojure/pokereader/Pokemon - Blue Version (USA, Europe).sav")
+(def test-file "./Pokemon - Blue Version (USA, Europe).sav")
 
 (def sav-data-file
   (byte-array (* 1024 38)))
 
-(defn- read-file
+(defn read-file
   ([] (read-file test-file))
   ([filename]
-     (.read (clojure.java.io/input-stream filename) sav-data-file)))
+     (.read (clojure.java.io/input-stream filename) sav-data-file))
+  ([filename bytes]
+     (.read (clojure.java.io/input-stream filename) bytes)))
 
 (defn- to-hex
   [x]
@@ -82,7 +84,7 @@
      (get-name bytes 0x2598)))
 
 (defn get-rival-name
-  ([] (get-rivals-name sav-data-file))
+  ([] (get-rival-name sav-data-file))
   ([bytes]
      (get-name bytes 0x25F6)))
 
@@ -148,21 +150,24 @@
         spd 40 ;2
         spc 42 ;2
         ]
-    {
-     :pokemon (hex-poke-index (keyword (to-hex (nth bytes (+ offset hex-number)))))
-     :level (nth bytes (+ offset level))
-     ;:type-1 (nth bytes (+ offset type-1))
-     ;:type-2 (nth bytes (+ offset type-2))
-     :move-1 (get-from-move-set (nth bytes (+ offset move-1)))
-     :move-2 (get-from-move-set (nth bytes (+ offset move-2)))
-     :move-3 (get-from-move-set (nth bytes (+ offset move-3)))
-     :move-4 (get-from-move-set (nth bytes (+ offset move-4)))
-     ;; ev's and iv
-     ;; :move-1-pp (nth bytes (+ offset move-1-pp))
-     ;; :move-2-pp (nth bytes (+ offset move-2-pp))
-     ;; :move-3-pp (nth bytes (+ offset move-3-pp))
-     ;; :move-4-pp (nth bytes (+ offset move-4-pp))
-     }))
+    (let [poke-name (get-from-hex-poke-index (keyword (to-hex (nth bytes (+ offset hex-number)))))]
+      {
+       :index (get-id-from-poke-index poke-name)
+       :pokemon poke-name
+       :level (nth bytes (+ offset level))
+                                        ;:type-1 (nth bytes (+ offset type-1))
+                                        ;:type-2 (nth bytes (+ offset type-2))
+       :moves {:move-1 (get-from-move-set (nth bytes (+ offset move-1)))
+               :move-2 (get-from-move-set (nth bytes (+ offset move-2)))
+               :move-3 (get-from-move-set (nth bytes (+ offset move-3)))
+               :move-4 (get-from-move-set (nth bytes (+ offset move-4)))
+               ;; :move-1-pp (nth bytes (+ offset move-1-pp))
+               ;; :move-2-pp (nth bytes (+ offset move-2-pp))
+               ;; :move-3-pp (nth bytes (+ offset move-3-pp))
+               ;; :move-4-pp (nth bytes (+ offset move-4-pp))
+               }
+       ;; ev's and iv
+       })))
 
 (defn get-pokemon-team
   ([] (get-pokemon-team sav-data-file))
